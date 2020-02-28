@@ -1,7 +1,5 @@
 #!/bin/bash
 
-storage_type=$1
-
 NODE_IP=""
 NODE_NAME=""
 HOST_PATH=/alauda/nexus
@@ -9,7 +7,7 @@ REGISTRY=$(docker info |grep 60080  |tr -d ' ')
 NEXUS_PVC=nexus-pvc
 
 with_hostpath(){
-    helm install stable/nexus --name nexus \
+    helm install stable/nexus --name nexus --namespace ${namespace} \
       --set global.registry.address=${REGISTRY} \
       --set nexus.service.nodePort=32010 \
       --set nexusProxy.env.nexusHttpHost=${NODE_IP} \
@@ -19,9 +17,9 @@ with_hostpath(){
 }
 
 with_pvc(){
-    ./create_pvc $NEXUS_PVC
+    ./create_pvc.sh $NEXUS_PVC
 
-    helm install . --name nexus \
+    helm install stable/nexus --name nexus --namespace ${namespace} \
       --set global.registry.address=${REGISTRY} \
       --set nexus.service.nodePort=32010 \
       --set nexusProxy.env.nexusHttpHost=${NODE_IP} \
@@ -38,28 +36,23 @@ init_nodename(){
   echo "NODE_IP is:$NODE_IP"
 }
 
-main(){
-    echo -e "\e[1;41m"
-    case "$1" in
+#main
 
-        "")
-        echo "请输入 hostpath 或者 pvc 来选定存储方式"
+read -p "请输入namespace[默认为default]:" namespace
+case "$namespace" in
+    "") namespace="default"
         ;;
+esac
 
-        "hostpath" )
-        init_nodename
-        with_hostpath
-        ;;
-
-        "pvc" )
-        init_nodename
+read -p "请输入存储类型[pvc/hostpath,默认为pvc]:" storage_type
+case "$storage_type" in
+    pvc | "") init_nodename
         with_pvc
         ;;
-
-    esac
-
-echo -e "\e[0m"
-}
-
-#main
-main $storage_type
+    hostpath) init_nodename
+        with_hostpath
+        ;;
+    *) echo "输入的类型 $storage_type 错误"
+    exit -1
+    ;;
+esac

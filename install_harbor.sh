@@ -1,7 +1,5 @@
 #!/bin/bash
 
-storage_type=$1
-
 REGISTRY=$(docker info |grep 60080  |tr -d ' ')
 NODE_IP=""          ###此参数为部署时指定的访问地址，写当前集群中任意一个master节点的ip即可
 NODE_NAME=""   ###需要修改为选择部署harbor节点的name，通过 kubectl get no 命令获取到的 name
@@ -19,7 +17,7 @@ with_hostpath(){
 
     echo hostpath
 
-    helm install --name harbor --namespace default stable/harbor \
+    helm install --name harbor --namespace ${namespace} stable/harbor \
     --set global.registry.address=${REGISTRY} \
     --set externalURL=http://${NODE_IP}:31104 \
     --set harborAdminPassword=$harbor_password \
@@ -53,13 +51,13 @@ with_pvc(){
 
     echo pvc
 
-    ./create_pvc.sh habordatabase
-    ./create_pvc.sh harborredis
-    ./create_pvc.sh harbormuseum
-    ./create_pvc.sh harborregistry
-    ./create_pvc.sh harborjob
+    ./create_pvc.sh $database_pvc
+    ./create_pvc.sh $redis_pvc
+    ./create_pvc.sh $chartmuseum_pvc
+    ./create_pvc.sh $registry_pvc
+    ./create_pvc.sh $jobservice_pvc
 
-    helm install --name harbor --namespace default stable/harbor \
+    helm install --name harbor --namespace ${namespace} stable/harbor \
     --set global.registry.address=${REGISTRY} \
     --set externalURL=http://${NODE_IP}:31104 \
     --set harborAdminPassword=$harbor_password \
@@ -92,28 +90,23 @@ init_nodename(){
     echo "NODE_IP is:$NODE_IP"
 }
 
-main(){
-    echo -e "\e[1;41m"
-    case "$1" in
+#main
 
-        "")
-        echo "请输入 hostpath 或者 pvc 来选定存储方式"
+read -p "请输入namespace[默认为default]:" namespace
+case "$namespace" in
+    "") namespace="default"
         ;;
+esac
 
-        "hostpath" )
-        init_nodename
-        with_hostpath
-        ;;
-
-        "pvc" )
-        init_nodename
+read -p "请输入存储类型[pvc/hostpath,默认为pvc]:" storage_type
+case "$storage_type" in
+    pvc | "") init_nodename
         with_pvc
         ;;
-
-    esac
-
-echo -e "\e[0m"
-}
-
-#main
-main $storage_type
+    hostpath) init_nodename
+        with_hostpath
+        ;;
+    *) echo "输入的类型 $storage_type 错误"
+    exit -1
+    ;;
+esac

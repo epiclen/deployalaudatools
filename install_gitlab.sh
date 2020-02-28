@@ -1,7 +1,5 @@
 #！/bin/bash
 
-storage_type=$1
-
 #如果是host安装按照node的资源选择一个
 #nodeip也是同样
 
@@ -17,7 +15,7 @@ redis_pvc="redispvc"           ###默认pvc的名字为redispvc，需要事先�
 
 with_hostpath(){
 
-helm install stable/gitlab-ce --name gitlab-ce --namespace default \
+helm install stable/gitlab-ce --name gitlab-ce --namespace ${namespace} \
     --set global.registry.address=${REGISTRY} \
     --set portal.debug=true \
     --set gitlabHost=${NODE_IP} \
@@ -43,10 +41,10 @@ helm install stable/gitlab-ce --name gitlab-ce --namespace default \
 with_pvc(){
 
 ./create_pvc.sh $portal_pvc
-./create_pvc.sh $databasepvc
-./create_pvc.sh $redispvc
+./create_pvc.sh $database_pvc
+./create_pvc.sh $redis_pvc
 
-helm install stable/gitlab-ce --name gitlab-ce --namespace default \
+helm install stable/gitlab-ce --name gitlab-ce --namespace ${namespace} \
     --set global.registry.address=${REGISTRY} \
     --set portal.debug=true \
     --set gitlabHost=${NODE_IP} \
@@ -71,28 +69,23 @@ init_nodename(){
   echo "NODE_IP is:$NODE_IP"
 }
 
-main(){
-    echo -e "\e[1;41m"
-    case "$1" in
+#main
 
-        "")
-        echo "请输入 hostpath 或者 pvc 来选定存储方式"
+read -p "请输入namespace[默认为default]:" namespace
+case "$namespace" in
+    "") namespace="default"
         ;;
+esac
 
-        "hostpath" )
-        init_nodename
-        with_hostpath
-        ;;
-
-        "pvc" )
-        init_nodename
+read -p "请输入存储类型[pvc/hostpath,默认为pvc]:" storage_type
+case "$storage_type" in
+    pvc | "") init_nodename
         with_pvc
         ;;
-
-    esac
-
-echo -e "\e[0m"
-}
-
-#main
-main $storage_type
+    hostpath) init_nodename
+        with_hostpath
+        ;;
+    *) echo "输入的类型 $storage_type 错误"
+    exit -1
+    ;;
+esac
