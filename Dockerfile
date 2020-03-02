@@ -1,2 +1,3 @@
 FROM alpine
-COPY deplpyalaudatools /
+WORKDIR /
+COPY ./* /deployalaudatools
