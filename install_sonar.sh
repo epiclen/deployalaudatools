@@ -53,15 +53,24 @@ case "$namespace" in
         ;;
 esac
 
-read -p "请输入存储类型[pvc/hostpath,默认为pvc]:" storage_type
-case "$storage_type" in
-    pvc | "") init_nodename
-        with_pvc
+while [ -z $storage_type ]
+do
+  read -p "请输入存储类型[0:pvc/1:hostpath,默认为0]:" storage_type
+  case "$storage_type" in
+      0 | 1) 
         ;;
-    hostpath) init_nodename
-        with_hostpath
+      "") storage_type=0
         ;;
-    *) echo "输入的类型 $storage_type 错误"
-    exit -1
-    ;;
+      *) unset storage_type
+        ;;
+  esac
+done
+
+init_nodename
+
+case $storage_type in
+    0)  with_pvc
+        ;;
+    1)  with_hostpath
+        ;;
 esac
