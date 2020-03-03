@@ -1,4 +1,4 @@
-#/bin/bash
+#!/bin/sh
 
 #如果是host安装按照node的资源选择一个
 #nodeip也是同样

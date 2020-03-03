@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 REGISTRY=$(docker info |grep 60080  |tr -d ' ')
 NODE_IP=""          ###此参数为部署时指定的访问地址，写当前集群中任意一个master节点的ip即可

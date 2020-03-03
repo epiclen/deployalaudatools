@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 registry=$(docker info |grep 60080  |tr -d ' ')
 PVC_NAME="sonarpvc"

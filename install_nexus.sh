@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 NODE_IP=""
 NODE_NAME=""

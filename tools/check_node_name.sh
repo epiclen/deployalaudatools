@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 check_node_name(){
     nodes=`kubectl get nodes|awk '{print $1}'|tail -n +2`
