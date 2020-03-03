@@ -51,11 +51,11 @@ with_pvc(){
 
     echo pvc
 
-    ./create_pvc.sh $database_pvc
-    ./create_pvc.sh $redis_pvc
-    ./create_pvc.sh $chartmuseum_pvc
-    ./create_pvc.sh $registry_pvc
-    ./create_pvc.sh $jobservice_pvc
+    ./tools/create_pvc.sh $database_pvc
+    ./tools/create_pvc.sh $redis_pvc
+    ./tools/create_pvc.sh $chartmuseum_pvc
+    ./tools/create_pvc.sh $registry_pvc
+    ./tools/create_pvc.sh $jobservice_pvc
 
     helm install --name harbor --namespace ${namespace} stable/harbor \
     --set global.registry.address=${REGISTRY} \
@@ -83,11 +83,11 @@ with_pvc(){
 }
 
 init_nodename(){
-    NODE_NAME=$(./check_node_name.sh)
-    NODE_IP=$(./get_nodeip.sh ${NODE_NAME})
+  NODE_NAME=$(./tools/check_node_name.sh)
+  NODE_IP=$(./tools/get_nodeip.sh ${NODE_NAME})
 
-    echo "NODE_NAME is:$NODE_NAME"
-    echo "NODE_IP is:$NODE_IP"
+  echo "NODE_NAME is:$NODE_NAME"
+  echo "NODE_IP is:$NODE_IP"
 }
 
 #main

@@ -36,7 +36,7 @@ Master:
       serverUrl: ${gitlab_url}
       token: ${gitlab_token}
   Location:
-    url: <Jenkins Location URL>
+    url: ${NODE_IP}
 Persistence:
   Enabled: false
   Host:
@@ -78,7 +78,7 @@ Master:
       serverUrl: ${gitlab_url}
       token: ${gitlab_token}
   Location:
-    url: <Jenkins Location URL>
+    url: ${NODE_IP}
 Persistence:
   Enabled: true
   ExistingClaim="$pvc_name"
@@ -100,6 +100,9 @@ Erebus:
   URL: "https://erebus.${ACP_NAMESPACE}.svc.cluster.local:443/kubernetes"
  
 EOF
+
+./tools/create_pvc.sh $pvc_name
+
 }
 
 business_with_host(){
@@ -118,7 +121,7 @@ Master:
       serverUrl: ${gitlab_url}
       token: ${gitlab_token}
   Location:
-    url: <Jenkins Location URL>
+    url: ${NODE_IP}
 Persistence:
   Enabled: false
   Host:
@@ -164,7 +167,7 @@ Master:
       serverUrl: ${gitlab_url}
       token: ${gitlab_token}
   Location:
-    url: <Jenkins Location URL>
+    url: ${NODE_IP}
 Persistence:
   Enabled: true
   ExistingClaim: "$pvc_name"
@@ -190,11 +193,14 @@ Erebus:
   URL: "https://$global_vip:443/kubernetes"
  
 EOF
+
+./tools/create_pvc.sh $pvc_name
+
 }
 
 init_nodename(){
-  NODE_NAME=$(./check_node_name.sh)
-  NODE_IP=$(./get_nodeip.sh ${NODE_NAME})
+  NODE_NAME=$(./tools/check_node_name.sh)
+  NODE_IP=$(./tools/get_nodeip.sh ${NODE_NAME})
 
   echo "NODE_NAME is:$NODE_NAME"
   echo "NODE_IP is:$NODE_IP"

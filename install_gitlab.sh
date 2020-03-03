@@ -1,4 +1,4 @@
-#！/bin/bash
+#/bin/bash
 
 #如果是host安装按照node的资源选择一个
 #nodeip也是同样
@@ -40,9 +40,9 @@ helm install stable/gitlab-ce --name gitlab-ce --namespace ${namespace} \
 
 with_pvc(){
 
-./create_pvc.sh $portal_pvc
-./create_pvc.sh $database_pvc
-./create_pvc.sh $redis_pvc
+./tools/create_pvc.sh $portal_pvc
+./tools/create_pvc.sh $database_pvc
+./tools/create_pvc.sh $redis_pvc
 
 helm install stable/gitlab-ce --name gitlab-ce --namespace ${namespace} \
     --set global.registry.address=${REGISTRY} \
@@ -62,8 +62,8 @@ helm install stable/gitlab-ce --name gitlab-ce --namespace ${namespace} \
 }
 
 init_nodename(){
-  NODE_NAME=$(./check_node_name.sh)
-  NODE_IP=$(./get_nodeip.sh ${NODE_NAME})
+  NODE_NAME=$(./tools/check_node_name.sh)
+  NODE_IP=$(./tools/get_nodeip.sh ${NODE_NAME})
 
   echo "NODE_NAME is:$NODE_NAME"
   echo "NODE_IP is:$NODE_IP"

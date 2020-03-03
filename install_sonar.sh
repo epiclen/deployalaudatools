@@ -23,7 +23,7 @@ with_hostpath(){
 
 with_pvc(){
 
-    ./create_pvc.sh $PVC_NAME
+    ./tools/create_pvc.sh $PVC_NAME
 
     helm install stable/sonarqube \
         --name sonarqube \
@@ -38,8 +38,8 @@ with_pvc(){
 }
 
 init_nodename(){
-  NODE_NAME=$(./check_node_name.sh)
-  NODE_IP=$(./get_nodeip.sh ${NODE_NAME})
+  NODE_NAME=$(./tools/check_node_name.sh)
+  NODE_IP=$(./tools/get_nodeip.sh ${NODE_NAME})
 
   echo "NODE_NAME is:$NODE_NAME"
   echo "NODE_IP is:$NODE_IP"
