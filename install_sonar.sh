@@ -9,7 +9,7 @@ HOST_PATH="/cpaas/data/sonarqube"
 
 with_hostpath(){
     helm install stable/sonarqube \
-        --name sonarqube \
+        --name ${name} \
         --set plugins.useDefaultPluginsPackage=true \
         --set global.registry.address=$registry \
         --namespace=${namespace} \
@@ -26,7 +26,7 @@ with_pvc(){
     ./tools/create_pvc.sh $PVC_NAME
 
     helm install stable/sonarqube \
-        --name sonarqube \
+        --name ${name} \
         --set plugins.useDefaultPluginsPackage=true \
         --set global.registry.address=$registry \
         --namespace=${namespace} \
@@ -63,6 +63,15 @@ do
         ;;
       *) unset storage_type
         ;;
+  esac
+done
+
+while [ -z $name ]
+do
+  read -p "请输入helm install的name,默认是sonar:" name
+  case $name in
+  "") name="sonar"
+    ;;
   esac
 done
 

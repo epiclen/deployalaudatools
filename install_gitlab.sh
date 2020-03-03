@@ -15,7 +15,7 @@ redis_pvc="redispvc"           ###默认pvc的名字为redispvc，需要事先�
 
 with_hostpath(){
 
-helm install stable/gitlab-ce --name gitlab-ce --namespace ${namespace} \
+helm install stable/gitlab-ce --name ${name} --namespace ${namespace} \
     --set global.registry.address=${REGISTRY} \
     --set portal.debug=true \
     --set gitlabHost=${NODE_IP} \
@@ -44,7 +44,7 @@ with_pvc(){
 ./tools/create_pvc.sh $database_pvc
 ./tools/create_pvc.sh $redis_pvc
 
-helm install stable/gitlab-ce --name gitlab-ce --namespace ${namespace} \
+helm install stable/gitlab-ce --name ${name} --namespace ${namespace} \
     --set global.registry.address=${REGISTRY} \
     --set portal.debug=true \
     --set gitlabHost=${NODE_IP} \
@@ -87,6 +87,15 @@ do
         ;;
       *) unset storage_type
         ;;
+  esac
+done
+
+while [ -z $name ]
+do
+  read -p "请输入helm install的name,默认是gitlab-ce:" name
+  case $name in
+  "") name="gitlab-ce"
+    ;;
   esac
 done
 

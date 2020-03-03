@@ -7,7 +7,7 @@ REGISTRY=$(docker info |grep 60080  |tr -d ' ')
 NEXUS_PVC=nexus-pvc
 
 with_hostpath(){
-    helm install stable/nexus --name nexus --namespace ${namespace} \
+    helm install stable/nexus --name ${name} --namespace ${namespace} \
       --set global.registry.address=${REGISTRY} \
       --set nexus.service.nodePort=32010 \
       --set nexusProxy.env.nexusHttpHost=${NODE_IP} \
@@ -19,7 +19,7 @@ with_hostpath(){
 with_pvc(){
     ./tools/create_pvc.sh $NEXUS_PVC
 
-    helm install stable/nexus --name nexus --namespace ${namespace} \
+    helm install stable/nexus --name ${name} --namespace ${namespace} \
       --set global.registry.address=${REGISTRY} \
       --set nexus.service.nodePort=32010 \
       --set nexusProxy.env.nexusHttpHost=${NODE_IP} \
@@ -54,6 +54,15 @@ do
         ;;
       *) unset storage_type
         ;;
+  esac
+done
+
+while [ -z $name ]
+do
+  read -p "请输入helm install的name,默认是nexus:" name
+  case $name in
+  "") name="nexus"
+    ;;
   esac
 done
 

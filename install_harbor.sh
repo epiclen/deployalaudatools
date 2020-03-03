@@ -17,7 +17,7 @@ with_hostpath(){
 
     echo hostpath
 
-    helm install --name harbor --namespace ${namespace} stable/harbor \
+    helm install --name ${name} --namespace ${namespace} stable/harbor \
     --set global.registry.address=${REGISTRY} \
     --set externalURL=http://${NODE_IP}:31104 \
     --set harborAdminPassword=$harbor_password \
@@ -57,7 +57,7 @@ with_pvc(){
     ./tools/create_pvc.sh $registry_pvc
     ./tools/create_pvc.sh $jobservice_pvc
 
-    helm install --name harbor --namespace ${namespace} stable/harbor \
+    helm install --name ${name} --namespace ${namespace} stable/harbor \
     --set global.registry.address=${REGISTRY} \
     --set externalURL=http://${NODE_IP}:31104 \
     --set harborAdminPassword=$harbor_password \
@@ -108,6 +108,15 @@ do
         ;;
       *) unset storage_type
         ;;
+  esac
+done
+
+while [ -z $name ]
+do
+  read -p "请输入helm install的name,默认是harbor:" name
+  case $name in
+  "") name="harbor"
+    ;;
   esac
 done
 

@@ -1,17 +1,23 @@
 #!/bin/sh
 
+#pvc或者host
 # storage_type
+
+#business和global
 # environment
 
+#gitlab信息输入
 # gitlab_name
 # gitlab_url
 # gitlab_token
 
+#自动获取node的name和ip
 # NODE_NAME
 
 #global vip是global集群的master ip
-#TOKEN也是devops-apiserver的集群(global)获取
 # global_vip
+
+#TOKEN也是devops-apiserver的集群(global)获取
 # TOKEN
 
 path="/root/alauda/jenkins"
@@ -269,6 +275,15 @@ then
   done
 fi
 
+while [ -z $name ]
+do
+  read -p "请输入helm install的name,默认是jenkins:" name
+  case $name in
+  "") name="jenkins"
+    ;;
+  esac
+done
+
 init_nodename
 
 case $[ $environment_code*10+$storage_type ] in
@@ -284,4 +299,4 @@ esac
 
 cat values.yaml
 
-helm install stable/jenkins --name jenkins --namespace ${namespace} -f values.yaml
+helm install stable/jenkins --name ${name} --namespace ${namespace} -f values.yaml
