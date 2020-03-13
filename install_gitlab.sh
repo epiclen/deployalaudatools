@@ -15,15 +15,16 @@ redis_pvc="redispvc"           ###默认pvc的名字为redispvc，需要事先�
 
 with_hostpath(){
 
-helm install stable/gitlab-ce --name ${name} --namespace ${namespace} \
+command="""
+helm install ${chart_name} --name ${name} --namespace ${namespace} \
     --set global.registry.address=${REGISTRY} \
     --set portal.debug=true \
     --set gitlabHost=${NODE_IP} \
     --set gitlabRootPassword=Gitlab12345 \
     --set service.type=NodePort \
-    --set service.ports.http.nodePort=31101 \
-    --set service.ports.ssh.nodePort=31102 \
-    --set service.ports.https.nodePort=31103 \
+    --set service.ports.http.nodePort=${http_port} \
+    --set service.ports.ssh.nodePort=${ssh_port} \
+    --set service.ports.https.nodePort=${https_port} \
     --set portal.persistence.enabled=false \
     --set portal.persistence.host.nodeName=${NODE_NAME} \
     --set portal.persistence.host.path="$potal_path" \
@@ -35,7 +36,9 @@ helm install stable/gitlab-ce --name ${name} --namespace ${namespace} \
     --set redis.persistence.enabled=false \
     --set redis.persistence.host.nodeName=${NODE_NAME} \
     --set redis.persistence.host.path="$redis_path" \
-    --set redis.persistence.host.nodeName="${NODE_NAME}" 
+    --set redis.persistence.host.nodeName="${NODE_NAME}" \
+    ${sets}
+    """
 }
 
 with_pvc(){
@@ -44,21 +47,24 @@ with_pvc(){
 ./tools/create_pvc.sh $database_pvc
 ./tools/create_pvc.sh $redis_pvc
 
-helm install stable/gitlab-ce --name ${name} --namespace ${namespace} \
+command="""
+helm install ${chart_name} --name ${name} --namespace ${namespace} \
     --set global.registry.address=${REGISTRY} \
     --set portal.debug=true \
     --set gitlabHost=${NODE_IP} \
     --set gitlabRootPassword=Gitlab12345 \
     --set service.type=NodePort \
-    --set service.ports.http.nodePort=31101 \
-    --set service.ports.ssh.nodePort=31102 \
-    --set service.ports.https.nodePort=31103 \
+    --set service.ports.http.nodePort=${http_port} \
+    --set service.ports.ssh.nodePort=${ssh_port} \
+    --set service.ports.https.nodePort=${https_port} \
     --set portal.persistence.enabled=true \
     --set portal.persistence.existingClaim=$portal_pvc \
     --set database.persistence.enabled=true \
     --set database.persistence.existingClaim=$database_pvc \
     --set redis.persistence.enabled=true \
-    --set redis.persistence.existingClaim=$redis_pvc 
+    --set redis.persistence.existingClaim=$redis_pvc \
+    ${sets}
+    """
 }
 
 init_nodename(){
@@ -71,6 +77,7 @@ init_nodename(){
 
 #main
 
+#input begin
 read -p "请输入namespace[默认为default]:" namespace
 case "$namespace" in
     "") namespace="default"
@@ -99,6 +106,34 @@ do
   esac
 done
 
+read -p "请输入http node port[默认为31101]:" http_port
+case "$http_port" in
+    "") http_port=31101
+        ;;
+esac
+
+read -p "请输入ssh node port[默认为31102]:" ssh_port
+case "$ssh_port" in
+    "") ssh_port=31102
+        ;;
+esac
+
+read -p "请输入https node port[默认为31103]:" https_port
+case "$https_port" in
+    "") https_port=31103
+        ;;
+esac
+
+read -p "请输入chart[默认为release/gitlab-ce]:" chart_name
+case "$chart_name" in
+    "") chart_name=release/gitlab-ce
+        ;;
+esac
+
+read -p "需要添加其他set吗[注意填写不正确可能导致命令失败]:" sets
+
+#input end
+
 init_nodename
 
 case $storage_type in
@@ -107,3 +142,18 @@ case $storage_type in
     1)  with_hostpath
         ;;
 esac
+
+echo "生成的helm命令:${command}"
+while [ -z $is_execute ]
+do
+  read -p "是否立即执行['y' or 'n'默认是'y']" is_execute
+  case $is_execute in
+    ""|"y") ;;
+    "n") exit 1
+      ;;
+    *) unset is_execute
+      ;; 
+  esac
+done
+
+$(echo $command)

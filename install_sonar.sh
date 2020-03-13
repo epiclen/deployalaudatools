@@ -2,39 +2,43 @@
 
 registry=$(docker info |grep 60080  |tr -d ' ')
 PVC_NAME="sonarpvc"
-NODE_PORT="31342"
 NODE_NAME=""
 NODE_IP=""
 HOST_PATH="/cpaas/data/sonarqube"
 
 with_hostpath(){
-    helm install stable/sonarqube \
+  command="""
+    helm install ${chart_name} \
         --name ${name} \
         --set plugins.useDefaultPluginsPackage=true \
         --set global.registry.address=$registry \
         --namespace=${namespace} \
         --set global.namespace=${namespace} \
         --set service.type=NodePort \
-        --set service.nodePort=$NODE_PORT \
+        --set service.nodePort=${NODE_PORT} \
         --set postgresql.database.persistence.enabled=false \
         --set postgresql.database.persistence.host.nodeName=$NODE_NAME \
-        --set postgresql.database.persistence.host.path=$HOST_PATH
+        --set postgresql.database.persistence.host.path=$HOST_PATH \
+        ${sets}
+        """
 }
 
 with_pvc(){
 
     ./tools/create_pvc.sh $PVC_NAME
-
-    helm install stable/sonarqube \
+  command="""
+    helm install ${chart_name} \
         --name ${name} \
         --set plugins.useDefaultPluginsPackage=true \
         --set global.registry.address=$registry \
         --namespace=${namespace} \
         --set global.namespace=${namespace} \
         --set service.type=NodePort \
-        --set service.nodePort=$NODE_PORT \
+        --set service.nodePort=${NODE_PORT} \
         --set postgresql.database.persistence.enabled=true \
-        --set postgresql.database.persistence.existingClaim=$PVC_NAME
+        --set postgresql.database.persistence.existingClaim=$PVC_NAME \
+        ${sets}
+        """
 }
 
 init_nodename(){
@@ -75,6 +79,20 @@ do
   esac
 done
 
+read -p "请输入node port[默认为31342]:" NODE_PORT
+case "$NODE_PORT" in
+    "") NODE_PORT=31342
+        ;;
+esac
+
+read -p "请输入chart[默认为release/sonarqube]:" chart_name
+case "$chart_name" in
+    "") chart_name=release/sonarqube
+        ;;
+esac
+
+read -p "需要添加其他set吗[注意填写不正确可能导致命令失败]:" sets
+
 init_nodename
 
 case $storage_type in
@@ -83,3 +101,18 @@ case $storage_type in
     1)  with_hostpath
         ;;
 esac
+
+echo "生成的helm命令:${command}"
+while [ -z $is_execute ]
+do
+  read -p "是否立即执行['y' or 'n'默认是'y']" is_execute
+  case $is_execute in
+    ""|"y") ;;
+    "n") exit 1
+      ;;
+    *) unset is_execute
+      ;; 
+  esac
+done
+
+$(echo $command)

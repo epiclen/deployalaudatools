@@ -15,17 +15,17 @@ jobservice_pvc=harborjob        ###harbor使用的pvc，需要事先在default�
 
 with_hostpath(){
 
-    echo hostpath
+    command="""
 
-    helm install --name ${name} --namespace ${namespace} stable/harbor \
+    helm install ${chart_name} --name ${name} --namespace ${namespace} \
     --set global.registry.address=${REGISTRY} \
-    --set externalURL=http://${NODE_IP}:31104 \
+    --set externalURL=http://${NODE_IP}:${http_port} \
     --set harborAdminPassword=$harbor_password \
     --set ingress.enabled=false \
     --set service.type=NodePort \
-    --set service.ports.http.nodePort=31104 \
-    --set service.ports.ssh.nodePort=31105 \
-    --set service.ports.https.nodePort=31106 \
+    --set service.ports.http.nodePort=${http_port} \
+    --set service.ports.ssh.nodePort=${ssh_port} \
+    --set service.ports.https.nodePort=${https_port} \
     --set database.password=$db_password \
     --set redis.usePassword=true \
     --set redis.password=$redis_password \
@@ -44,12 +44,12 @@ with_hostpath(){
     --set jobservice.persistence.enabled=false \
     --set jobservice.persistence.host.nodeName=${NODE_NAME} \
     --set jobservice.persistence.host.path=${HOST_PATH}/jobservice \
-    --set AlaudaACP.Enabled=false
+    --set AlaudaACP.Enabled=false \
+    ${sets}
+    """
 }
 
 with_pvc(){
-
-    echo pvc
 
     ./tools/create_pvc.sh $database_pvc
     ./tools/create_pvc.sh $redis_pvc
@@ -57,15 +57,16 @@ with_pvc(){
     ./tools/create_pvc.sh $registry_pvc
     ./tools/create_pvc.sh $jobservice_pvc
 
-    helm install --name ${name} --namespace ${namespace} stable/harbor \
+  command="""
+    helm install ${chart_name} --name ${name} --namespace ${namespace} \
     --set global.registry.address=${REGISTRY} \
-    --set externalURL=http://${NODE_IP}:31104 \
+    --set externalURL=http://${NODE_IP}:${http_port} \
     --set harborAdminPassword=$harbor_password \
     --set ingress.enabled=false \
     --set service.type=NodePort \
-    --set service.ports.http.nodePort=31104 \
-    --set service.ports.ssh.nodePort=31105 \
-    --set service.ports.https.nodePort=31106 \
+    --set service.ports.http.nodePort=${http_port} \
+    --set service.ports.ssh.nodePort=${ssh_port} \
+    --set service.ports.https.nodePort=${https_port} \
     --set database.password=$db_password \
     --set redis.usePassword=true \
     --set redis.password=$redis_password \
@@ -79,7 +80,9 @@ with_pvc(){
     --set registry.persistence.existingClaim=${registry_pvc} \
     --set jobservice.persistence.enabled=true \
     --set jobservice.persistence.existingClaim=${jobservice_pvc} \
-    --set AlaudaACP.Enabled=false
+    --set AlaudaACP.Enabled=false \
+    ${sets}
+    """
 }
 
 init_nodename(){
@@ -91,7 +94,7 @@ init_nodename(){
 }
 
 #main
-
+#input begin
 read -p "请输入namespace[默认为default]:" namespace
 case "$namespace" in
     "") namespace="default"
@@ -120,6 +123,34 @@ do
   esac
 done
 
+read -p "请输入http node port[默认为31104]:" http_port
+case "$http_port" in
+    "") http_port=31104
+        ;;
+esac
+
+read -p "请输入ssh node port[默认为31105]:" ssh_port
+case "$ssh_port" in
+    "") ssh_port=31105
+        ;;
+esac
+
+read -p "请输入https node port[默认为31106]:" https_port
+case "$https_port" in
+    "") https_port=31106
+        ;;
+esac
+
+read -p "请输入chart[默认为release/harbor]:" chart_name
+case "$chart_name" in
+    "") chart_name=release/harbor
+        ;;
+esac
+
+read -p "需要添加其他set吗[注意填写不正确可能导致命令失败]:" sets
+
+#input end
+
 init_nodename
 
 case $storage_type in
@@ -128,3 +159,18 @@ case $storage_type in
     1)  with_hostpath
         ;;
 esac
+
+echo "生成的helm命令:${command}"
+while [ -z $is_execute ]
+do
+  read -p "是否立即执行['y' or 'n'默认是'y']" is_execute
+  case $is_execute in
+    ""|"y") ;;
+    "n") exit 1
+      ;;
+    *) unset is_execute
+      ;; 
+  esac
+done
+
+$(echo $command)

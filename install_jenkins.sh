@@ -34,7 +34,7 @@ global:
     address: ${REGISTRY}
 Master:
   ServiceType: NodePort
-  NodePort: 32001
+  NodePort: ${node_port}
   AdminPassword: "$password"
   gitlabConfigs:
     - name: ${gitlab_name}
@@ -76,7 +76,7 @@ global:
     address: ${REGISTRY}
 Master:
   ServiceType: NodePort
-  NodePort: 32001
+  NodePort: ${node_port}
   AdminPassword: "$password"
   gitlabConfigs:
     - name: ${gitlab_name}
@@ -119,7 +119,7 @@ global:
     address: ${REGISTRY}
 Master:
   ServiceType: NodePort
-  NodePort: 32001
+  NodePort: ${node_port}
   AdminPassword: "$password"
   gitlabConfigs:
     - name: ${gitlab_name}
@@ -165,7 +165,7 @@ global:
     address: ${REGISTRY}
 Master:
   ServiceType: NodePort
-  NodePort: 32001
+  NodePort: ${node_port}
   AdminPassword: "$password"
   gitlabConfigs:
     - name: ${gitlab_name}
@@ -284,6 +284,20 @@ do
   esac
 done
 
+read -p "请输入node port[默认为32001]:" node_port
+case "$node_port" in
+    "") node_port=32001
+        ;;
+esac
+
+read -p "请输入chart[默认为release/jenkins]:" chart_name
+case "$chart_name" in
+    "") chart_name=release/jenkins
+        ;;
+esac
+
+read -p "需要添加其他set吗[注意填写不正确可能导致命令失败]:" sets
+
 init_nodename
 
 case $[ $environment_code*10+$storage_type ] in
@@ -297,6 +311,36 @@ case $[ $environment_code*10+$storage_type ] in
       ;;
 esac
 
-cat values.yaml
+command="""
+  helm install ${chart_name} --name ${name} --namespace ${namespace} -f values.yaml ${sets}
+"""
 
-helm install stable/jenkins --name ${name} --namespace ${namespace} -f values.yaml
+echo "生成的values.yaml:$(cat values.yaml)"
+while [ -z $is_execute ]
+do
+  read -p "是否立即执行['y' or 'n'默认是'y']" is_execute
+  case $is_execute in
+    ""|"y") ;;
+    "n") exit 1
+      ;;
+    *) unset is_execute
+      ;; 
+  esac
+done
+
+unset is_execute
+
+echo "生成的helm命令:${command}"
+while [ -z $is_execute ]
+do
+  read -p "是否立即执行['y' or 'n'默认是'y']" is_execute
+  case $is_execute in
+    ""|"y") ;;
+    "n") exit 1
+      ;;
+    *) unset is_execute
+      ;; 
+  esac
+done
+
+$(echo $command)

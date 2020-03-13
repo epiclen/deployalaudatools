@@ -5,27 +5,33 @@ NODE_NAME=""
 HOST_PATH=/alauda/nexus
 REGISTRY=$(docker info |grep 60080  |tr -d ' ')
 NEXUS_PVC=nexus-pvc
+command="Failed!"
 
 with_hostpath(){
-    helm install stable/nexus --name ${name} --namespace ${namespace} \
+  command="""
+    helm install ${chart_name} --name ${name} --namespace ${namespace} \
       --set global.registry.address=${REGISTRY} \
-      --set nexus.service.nodePort=32010 \
+      --set nexus.service.nodePort=${port} \
       --set nexusProxy.env.nexusHttpHost=${NODE_IP} \
       --set nexusProxy.env.nexusDockerHost=${NODE_IP} \
       --set persistence.host.nodeName=${NODE_NAME} \
-      --set persistence.host.path=${HOST_PATH}
+      --set persistence.host.path=${HOST_PATH} \
+      ${sets}
+      """
 }
 
 with_pvc(){
     ./tools/create_pvc.sh $NEXUS_PVC
-
-    helm install stable/nexus --name ${name} --namespace ${namespace} \
+  command="""
+    helm install ${chart_name} --name ${name} --namespace ${namespace} \
       --set global.registry.address=${REGISTRY} \
-      --set nexus.service.nodePort=32010 \
+      --set nexus.service.nodePort=${port} \
       --set nexusProxy.env.nexusHttpHost=${NODE_IP} \
       --set nexusProxy.env.nexusDockerHost=${NODE_IP} \
       --set persistence.enabled=true \
-      --set persistence.existingClaim=${NEXUS_PVC}
+      --set persistence.existingClaim=${NEXUS_PVC} \
+      ${sets}
+      """
 }
 
 init_nodename(){
@@ -66,6 +72,20 @@ do
   esac
 done
 
+read -p "请输入node port[默认为32010]:" port
+case "$port" in
+    "") port=32010
+        ;;
+esac
+
+read -p "请输入chart[默认为release/nexus]:" chart_name
+case "$chart_name" in
+    "") chart_name=release/nexus
+        ;;
+esac
+
+read -p "需要添加其他set吗[注意填写不正确可能导致命令失败]:" sets
+
 init_nodename
 
 case $storage_type in
@@ -74,3 +94,18 @@ case $storage_type in
     1)  with_hostpath
         ;;
 esac
+
+echo "生成的helm命令:${command}"
+while [ -z $is_execute ]
+do
+  read -p "是否立即执行['y' or 'n'默认是'y']" is_execute
+  case $is_execute in
+    ""|"y") ;;
+    "n") exit 1
+      ;;
+    *) unset is_execute
+      ;; 
+  esac
+done
+
+$(echo $command)
