@@ -12,4 +12,4 @@ This README would normally document whatever steps are necessary to get your app
 
 使用方法
 
-docker run --rm -v `pwd`:/v harbor-b.alauda.cn/devops/deploytools:latest "cp" "-r" "/deploytools" "/v/"
+docker run --rm -v $(pwd):/v harbor-b.alauda.cn/devops/deploytools:latest "cp" "-r" "/deploytools" "/v/"
