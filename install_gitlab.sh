@@ -148,7 +148,8 @@ while [ -z $is_execute ]
 do
   read -p "是否立即执行['y' or 'n'默认是'y']" is_execute
   case $is_execute in
-    ""|"y") ;;
+    ""|"y") is_execute="y"
+      ;;
     "n") exit 1
       ;;
     *) unset is_execute
