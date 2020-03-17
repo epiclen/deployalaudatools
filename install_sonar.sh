@@ -8,7 +8,7 @@ HOST_PATH="/cpaas/data/sonarqube"
 
 with_hostpath(){
   command="""
-    helm install ${chart_name} \
+    helm install ${chart_name} ${chart_version}\
         --name ${name} \
         --set plugins.useDefaultPluginsPackage=true \
         --set global.registry.address=$registry \
@@ -27,7 +27,7 @@ with_pvc(){
 
     ./tools/create_pvc.sh $PVC_NAME
   command="""
-    helm install ${chart_name} \
+    helm install ${chart_name} ${chart_version}\
         --name ${name} \
         --set plugins.useDefaultPluginsPackage=true \
         --set global.registry.address=$registry \
@@ -89,6 +89,14 @@ read -p "请输入chart[默认为release/sonarqube]:" chart_name
 case "$chart_name" in
     "") chart_name=release/sonarqube
         ;;
+esac
+
+read -p "请输入version[默认为不设置]:" chart_version
+case "$chart_version" in
+    "") chart_version=""
+      ;;
+    *) chart_version="--version=${chart_version} "
+      ;;
 esac
 
 read -p "需要添加其他set吗[注意填写不正确可能导致命令失败]:" sets

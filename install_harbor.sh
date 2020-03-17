@@ -17,7 +17,7 @@ with_hostpath(){
 
     command="""
 
-    helm install ${chart_name} --name ${name} --namespace ${namespace} \
+    helm install ${chart_name} ${chart_version}--name ${name} --namespace ${namespace} \
     --set global.registry.address=${REGISTRY} \
     --set externalURL=http://${NODE_IP}:${http_port} \
     --set harborAdminPassword=$harbor_password \
@@ -58,7 +58,7 @@ with_pvc(){
     ./tools/create_pvc.sh $jobservice_pvc
 
   command="""
-    helm install ${chart_name} --name ${name} --namespace ${namespace} \
+    helm install ${chart_name} ${chart_version}--name ${name} --namespace ${namespace} \
     --set global.registry.address=${REGISTRY} \
     --set externalURL=http://${NODE_IP}:${http_port} \
     --set harborAdminPassword=$harbor_password \
@@ -145,6 +145,14 @@ read -p "请输入chart[默认为release/harbor]:" chart_name
 case "$chart_name" in
     "") chart_name=release/harbor
         ;;
+esac
+
+read -p "请输入version[默认为不设置]:" chart_version
+case "$chart_version" in
+    "") chart_version=""
+      ;;
+    *) chart_version="--version=${chart_version} "
+      ;;
 esac
 
 read -p "需要添加其他set吗[注意填写不正确可能导致命令失败]:" sets

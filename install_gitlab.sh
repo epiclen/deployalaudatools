@@ -16,7 +16,7 @@ redis_pvc="redispvc"           ###默认pvc的名字为redispvc，需要事先�
 with_hostpath(){
 
 command="""
-helm install ${chart_name} --name ${name} --namespace ${namespace} \
+helm install ${chart_name} ${chart_version} --name ${name} --namespace ${namespace} \
     --set global.registry.address=${REGISTRY} \
     --set portal.debug=true \
     --set gitlabHost=${NODE_IP} \
@@ -48,7 +48,7 @@ with_pvc(){
 ./tools/create_pvc.sh $redis_pvc
 
 command="""
-helm install ${chart_name} --name ${name} --namespace ${namespace} \
+helm install ${chart_name} ${chart_version}--name ${name} --namespace ${namespace} \
     --set global.registry.address=${REGISTRY} \
     --set portal.debug=true \
     --set gitlabHost=${NODE_IP} \
@@ -128,6 +128,14 @@ read -p "请输入chart[默认为release/gitlab-ce]:" chart_name
 case "$chart_name" in
     "") chart_name=release/gitlab-ce
         ;;
+esac
+
+read -p "请输入version[默认为不设置]:" chart_version
+case "$chart_version" in
+    "") chart_version=""
+      ;;
+    *) chart_version="--version=${chart_version} "
+      ;;
 esac
 
 read -p "需要添加其他set吗[注意填写不正确可能导致命令失败]:" sets

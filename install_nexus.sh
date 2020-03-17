@@ -84,6 +84,14 @@ case "$chart_name" in
         ;;
 esac
 
+read -p "请输入version[默认为不设置]:" chart_version
+case "$chart_version" in
+    "") chart_version=""
+      ;;
+    *) chart_version="--version=${chart_version} "
+      ;;
+esac
+
 read -p "需要添加其他set吗[注意填写不正确可能导致命令失败]:" sets
 
 init_nodename

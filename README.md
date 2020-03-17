@@ -13,3 +13,11 @@ This README would normally document whatever steps are necessary to get your app
 使用方法
 
 docker run --rm -v $(pwd):/v harbor-b.alauda.cn/devops/deploytools:latest "cp" "-r" "/deploytools" "/v/"
+
+v1.0.2
+
+增加版本设置
+
+使用方法
+
+docker run --rm -v $(pwd):/v harbor-b.alauda.cn/devops/deploytools:latest "/v"
