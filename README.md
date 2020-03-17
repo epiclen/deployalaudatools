@@ -20,4 +20,4 @@ v1.0.2
 
 使用方法
 
-docker run --rm -v $(pwd):/v harbor-b.alauda.cn/devops/deploytools:latest "/v"
+docker run --rm -v $(pwd):/v harbor-b.alauda.cn/deploytools/deploytools:latest "/v"
