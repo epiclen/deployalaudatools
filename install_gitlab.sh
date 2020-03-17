@@ -13,11 +13,9 @@ portal_pvc="portalpvc"          ###默认pvc的名字为portalpvc，需要事先
 database_pvc="databasepvc"      ###默认pvc的名字为databasepvc，需要事先在default命名空间下准备好这个pvc，可更改，但也需要事先创建好对应的pvc。
 redis_pvc="redispvc"           ###默认pvc的名字为redispvc，需要事先在default命名空间下准备好这个pvc，可更改，但也需要事先创建好对应的pvc。
 
-with_hostpath(){
+with_hostpath_values(){
 
-command="""
-helm install ${chart_name} ${chart_version} --name ${name} --namespace ${namespace} \
-    --set global.registry.address=${REGISTRY} \
+values="""--set global.registry.address=${REGISTRY} \
     --set portal.debug=true \
     --set gitlabHost=${NODE_IP} \
     --set gitlabRootPassword=Gitlab12345 \
@@ -41,15 +39,13 @@ helm install ${chart_name} ${chart_version} --name ${name} --namespace ${namespa
     """
 }
 
-with_pvc(){
+with_pvc_values(){
 
 ./tools/create_pvc.sh $portal_pvc
 ./tools/create_pvc.sh $database_pvc
 ./tools/create_pvc.sh $redis_pvc
 
-command="""
-helm install ${chart_name} ${chart_version}--name ${name} --namespace ${namespace} \
-    --set global.registry.address=${REGISTRY} \
+values="""--set global.registry.address=${REGISTRY} \
     --set portal.debug=true \
     --set gitlabHost=${NODE_IP} \
     --set gitlabRootPassword=Gitlab12345 \
@@ -78,80 +74,40 @@ init_nodename(){
 #main
 
 #input begin
-read -p "请输入namespace[默认为default]:" namespace
-case "$namespace" in
-    "") namespace="default"
-        ;;
-esac
+namespace=$(./tools/input_namespace.sh)
 
-while [ -z $storage_type ]
-do
-  read -p "请输入存储类型[0:pvc/1:hostpath,默认为0]:" storage_type
-  case "$storage_type" in
-      0 | 1) 
-        ;;
-      "") storage_type=0
-        ;;
-      *) unset storage_type
-        ;;
-  esac
-done
+storage_type=$(./tools/input_storage_type.sh)
 
-while [ -z $name ]
-do
-  read -p "请输入helm install的name,默认是gitlab-ce:" name
-  case $name in
-  "") name="gitlab-ce"
-    ;;
-  esac
-done
+name=$(./tools/input_name.sh)
 
-read -p "请输入http node port[默认为31101]:" http_port
-case "$http_port" in
-    "") http_port=31101
-        ;;
-esac
+http_port=$(./tools/input_port.sh '请输入http node port[默认为31101]:' 31101)
 
-read -p "请输入ssh node port[默认为31102]:" ssh_port
-case "$ssh_port" in
-    "") ssh_port=31102
-        ;;
-esac
+ssh_port=$(./tools/input_port.sh '请输入ssh node port[默认为31102]:' 31102)
 
-read -p "请输入https node port[默认为31103]:" https_port
-case "$https_port" in
-    "") https_port=31103
-        ;;
-esac
+https_port=$(./tools/input_port.sh '请输入https node port[默认为31103]:' 31103)
 
-read -p "请输入chart[默认为release/gitlab-ce]:" chart_name
-case "$chart_name" in
-    "") chart_name=release/gitlab-ce
-        ;;
-esac
+chart_name=$(./tools/input_chart_name.sh)
 
-read -p "请输入version[默认为不设置]:" chart_version
-case "$chart_version" in
-    "") chart_version=""
-      ;;
-    *) chart_version="--version=${chart_version} "
-      ;;
-esac
+chart_version=$(./tools/input_chart_version.sh)
 
-read -p "需要添加其他set吗[注意填写不正确可能导致命令失败]:" sets
+sets=$(./tools/input_sets.sh)
 
 #input end
 
 init_nodename
 
 case $storage_type in
-    0)  with_pvc
+    0)  with_pvc_values
         ;;
-    1)  with_hostpath
+    1)  with_hostpath_values
         ;;
 esac
 
-echo "生成的helm命令:${command}"
+command="""
+helm install ${chart_name} ${chart_version}--name ${name} --namespace ${namespace} ${values}
+"""
+
+echo """生成的helm命令:$command"""
 while [ -z $is_execute ]
 do
   read -p "是否立即执行['y' or 'n'默认是'y']" is_execute
