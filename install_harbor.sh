@@ -13,11 +13,9 @@ chartmuseum_pvc=harbormuseum   ###harbor使用的pvc，需要事先在default下
 registry_pvc=harborregistry     ###harbor的registry使用的pvc，需要事先在default下创建这个pvc
 jobservice_pvc=harborjob        ###harbor使用的pvc，需要事先在default下创建这个pvc
 
-with_hostpath(){
+with_hostpath_values(){
 
-    command="""
-
-    helm install ${chart_name} ${chart_version}--name ${name} --namespace ${namespace} \
+    values="""
     --set global.registry.address=${REGISTRY} \
     --set externalURL=http://${NODE_IP}:${http_port} \
     --set harborAdminPassword=$harbor_password \
@@ -49,7 +47,7 @@ with_hostpath(){
     """
 }
 
-with_pvc(){
+with_pvc_values(){
 
     ./tools/create_pvc.sh $database_pvc
     ./tools/create_pvc.sh $redis_pvc
@@ -57,8 +55,7 @@ with_pvc(){
     ./tools/create_pvc.sh $registry_pvc
     ./tools/create_pvc.sh $jobservice_pvc
 
-  command="""
-    helm install ${chart_name} ${chart_version}--name ${name} --namespace ${namespace} \
+  values="""
     --set global.registry.address=${REGISTRY} \
     --set externalURL=http://${NODE_IP}:${http_port} \
     --set harborAdminPassword=$harbor_password \
@@ -95,78 +92,38 @@ init_nodename(){
 
 #main
 #input begin
-read -p "请输入namespace[默认为default]:" namespace
-case "$namespace" in
-    "") namespace="default"
-        ;;
-esac
+namespace=$(./tools/input_namespace.sh)
 
-while [ -z $storage_type ]
-do
-  read -p "请输入存储类型[0:pvc/1:hostpath,默认为0]:" storage_type
-  case "$storage_type" in
-      0 | 1) 
-        ;;
-      "") storage_type=0
-        ;;
-      *) unset storage_type
-        ;;
-  esac
-done
+storage_type=$(./tools/input_storage_type.sh)
 
-while [ -z $name ]
-do
-  read -p "请输入helm install的name,默认是harbor:" name
-  case $name in
-  "") name="harbor"
-    ;;
-  esac
-done
+name=$(./tools/input_name.sh)
 
-read -p "请输入http node port[默认为31104]:" http_port
-case "$http_port" in
-    "") http_port=31104
-        ;;
-esac
+http_port=$(./tools/input_port.sh '请输入http node port[默认为31104]:' 31104)
 
-read -p "请输入ssh node port[默认为31105]:" ssh_port
-case "$ssh_port" in
-    "") ssh_port=31105
-        ;;
-esac
+ssh_port=$(./tools/input_port.sh '请输入ssh node port[默认为31105]:' 31105)
 
-read -p "请输入https node port[默认为31106]:" https_port
-case "$https_port" in
-    "") https_port=31106
-        ;;
-esac
+https_port=$(./tools/input_port.sh '请输入https node port[默认为31106]:' 31106)
 
-read -p "请输入chart[默认为release/harbor]:" chart_name
-case "$chart_name" in
-    "") chart_name=release/harbor
-        ;;
-esac
+chart_name=$(./tools/input_chart_name.sh)
 
-read -p "请输入version[默认为不设置]:" chart_version
-case "$chart_version" in
-    "") chart_version=""
-      ;;
-    *) chart_version="--version=${chart_version} "
-      ;;
-esac
+chart_version=$(./tools/input_chart_version.sh)
 
-read -p "需要添加其他set吗[注意填写不正确可能导致命令失败]:" sets
+sets=$(./tools/input_sets.sh)
 
 #input end
 
 init_nodename
 
 case $storage_type in
-    0)  with_pvc
+    0)  with_pvc_values
         ;;
-    1)  with_hostpath
+    1)  with_hostpath_values
         ;;
 esac
+
+command="""
+helm install ${chart_name} ${chart_version}--name ${name} --namespace ${namespace} ${values}
+"""
 
 echo "生成的helm命令:${command}"
 while [ -z $is_execute ]
