@@ -74,6 +74,8 @@ init_nodename(){
 #main
 
 #input begin
+REGISTRY=$(./tools/input_registry.sh $REGISTRY)
+
 namespace=$(./tools/input_namespace.sh)
 
 storage_type=$(./tools/input_storage_type.sh)
